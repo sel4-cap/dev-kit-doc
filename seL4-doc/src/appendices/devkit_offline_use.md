@@ -67,7 +67,7 @@ The Docker image contains all the required toolchain for building seL4 and seL4 
 
 ## Downloading source code for offline use
 
-The source code for seL4 and the seL4 developer kit is stored across multiple repositories. The `repo` command line tool is used alongside manifest files to make downloading and managing the code from these multiple repositories easier. A manifest file details what repositories and versions of those repositories are required for a certain project. There is one main manifests for the seL4 developer kit:
+The source code for seL4 and the seL4 developer kit is stored across multiple repositories. The `repo` command line tool is used alongside manifest files to make downloading and managing the code from these multiple repositories easier. A manifest file details what repositories and versions of those repositories are required for a certain project. There is one main manifest for the seL4 developer kit:
 
 - `microkit-manifest` - used to download the source for building Microkit applications
 
