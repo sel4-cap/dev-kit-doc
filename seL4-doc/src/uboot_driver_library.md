@@ -21,7 +21,7 @@ The primary goal of the library is to allow drivers from U-Boot to be used withi
 
 - A wrapper around the U-Boot code to provide an API for users of the library to interact with devices and manage library initialisation / shutdown.
 
-It should be noted that the library works with the intended security and isolation of seL4; capabilities to permit access to hardware devices and provide sufficient resources (e.g. heap and DMA memory) must be granted to components using the library.
+It should be noted that the library works with the intended security and isolation of seL4; capabilities to permit access to hardware devices and provide sufficient resources (e.g. heap and DMA memory) must be granted to protection domains using the library.
 
 ## Detailed Design Information
 
