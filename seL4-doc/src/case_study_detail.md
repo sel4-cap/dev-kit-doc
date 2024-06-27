@@ -67,7 +67,13 @@ The buffer has been deliberately designed for the purpose of this worked example
 
 At its core the circular buffer is a simple character array with *head* and *tail* holding indexes associated with the start and end of the used portion of the array.
 
-- Function implementations for the circular buffer and included in `src/circular_buffer.c`.
+### Procedure
+
+Reading data from, or writing data to, the circular buffer requires the data array, *head* index, and *tail* index to be modified. Such modification of the buffer cannot be allowed to occur concurrently by both the Crypto and Transmitter components, otherwise corruption of the buffer may occur. Access to the buffer by the two components must therefore be protected to avoid concurrent access.
+
+Within the security demonstrator, a lock is used to enforce this critical section which takes the form of a boolean on the circular buffer data structure; each component must lock the circular buffer prior to accessing the circular buffer, and must release the lock when access to the circular buffer has been completed.
+
+- Function implementations for the circular buffer are included in `src/circular_buffer.c`.
 - A memory region is a contiguous range of physical memory and the memory region for the circular buffer is mapped onto both the Crypto and Transmitter protection domains. A virtual address, caching attributes and permissions (read, write and execute) are given to each protection domain.
 
 This results in an instance of the circular buffer type being made available in an area of memory shared by both the Crypto and Transmitter protection domains.
