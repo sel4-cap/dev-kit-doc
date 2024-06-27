@@ -69,7 +69,7 @@ One of the core mechanisms for providing a software interface to a hardware devi
 
 The memory addresses that a U-Boot driver uses for communication with a device can be either read from the device tree (i.e. from a device's `reg` property) or in some cases can be hard-coded into the driver.
 
-At this point it should be noted that U-Boot source code is intended to be executed in an environment with direct access to the system's physical address space; physical addresses are mapped in the system file in microkit.
+At this point it should be noted that U-Boot source code is intended to be executed in an environment with direct access to the system's physical address space; physical addresses are mapped in the system file in Microkit.
 
 U-Boot drivers performing memory mapped IO should perform seamlessly without the need for any modifications to the driver.
 

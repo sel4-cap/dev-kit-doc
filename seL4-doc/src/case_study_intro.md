@@ -1,10 +1,10 @@
 # Case Study Introduction
 
-This section works through an example to show some of our device drivers being used within a larger microkit application. It is nominally labelled as a 'security domain' demonstrator (named `security_demo`) but this is mainly in the context of being a keyboard-based encryption device that was inspired by an Enigma machine! It is intentionally simple and its main purpose is to show data separation and to provide worked examples of protection domain communication using different seL4 mechanisms.
+This section works through an example to show some of our device drivers being used within a larger Microkit application. It is nominally labelled as a 'security domain' demonstrator (named `security_demo`) but this is mainly in the context of being a keyboard-based encryption device that was inspired by an Enigma machine! It is intentionally simple and its main purpose is to show data separation and to provide worked examples of protection domain communication using different seL4 mechanisms.
 
 Extra functionality within the demonstration application is deliberately kept to a minimum to leave the source code less cluttered, so that the developer can readily see the 'more interesting' protection domain and device interactions without too much extra, feature-supporting code. In line with the rest of the developer kit, the demonstration application is intended to be more of a springboard for a developer kit user than a polished product for an end user.
 
-As with earlier sections of this developer kit documentation, we continue to defer to the seL4 Foundation's [documentation of microkit](https://docs.sel4.systems/projects/microkit/) as the primary source of understanding of microkit, but this section will cover aspects of the use of microkit where appropriate.
+As with earlier sections of this developer kit documentation, we continue to defer to the seL4 Foundation's [documentation of Microkit](https://docs.sel4.systems/projects/microkit/) as the primary source of understanding of Microkit, but this section will cover aspects of the use of Microkit where appropriate.
 
 ## Basic Description
 
@@ -16,7 +16,7 @@ The architecture of the demonstrator is shown below.
 
 ![Demonstrator architecture](figures/encrypter_arch.png)
 
-Arrow directions show an abstracted view of data flow. Arrow labels refer to microkit connector types (some concerned with data flow, some with control flow), which are elaborated in the key. More details about microkit connector types may be found in the [microkit manual](https://github.com/seL4/microkit/blob/main/docs/manual.md), but the fundamental types are Protected procedure and Notification (see examples such as `Protected procedure` in the key).
+Arrow directions show an abstracted view of data flow. Arrow labels refer to Microkit connector types (some concerned with data flow, some with control flow), which are elaborated in the key. More details about Microkit connector types may be found in the [Microkit manual](https://github.com/seL4/microkit/blob/main/docs/manual.md), but the fundamental types are Protected procedure and Notification (see examples such as `Protected procedure` in the key).
 
 As the KeyReader and Crypto protection domains handle plaintext and cryptographic data (e.g. keys), they are considered as 'high-side' in terms of security and must be kept separate from the downstream 'low-side' protection domains that handle ciphertext. It is not the role of this developer kit to re-justify the credentials of seL4 (the [seL4 whitepaper](https://sel4.systems/About/seL4-whitepaper.pdf) is a good starting point), but suffice to say that seL4's capability-based access controls guarantee protection and separation between all protection domains, regardless of the notional high and low sides that we have overlaid, only allowing interactions between protection domains where explicitly established via the seL4 connector types.
 
