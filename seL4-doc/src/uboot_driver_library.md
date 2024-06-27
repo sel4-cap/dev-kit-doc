@@ -21,7 +21,7 @@ The primary goal of the library is to allow drivers from U-Boot to be used withi
 
 - A wrapper around the U-Boot code to provide an API for users of the library to interact with devices and manage library initialisation / shutdown.
 
-It should be noted that the library works with the intended security and isolation of seL4; capabilities to permit access to hardware devices and provide sufficient resources (e.g. heap and DMA memory) must be granted to components using the library.
+It should be noted that the library works with the intended security and isolation of seL4; capabilities to permit access to hardware devices and provide sufficient resources (e.g. heap and DMA memory) must be granted to protection domains using the library.
 
 ## Detailed Design Information
 
@@ -69,7 +69,7 @@ One of the core mechanisms for providing a software interface to a hardware devi
 
 The memory addresses that a U-Boot driver uses for communication with a device can be either read from the device tree (i.e. from a device's `reg` property) or in some cases can be hard-coded into the driver.
 
-At this point it should be noted that U-Boot source code is intended to be executed in an environment with direct access to the system's physical address space; physical addresses are mapped in the system file in microkit.
+At this point it should be noted that U-Boot source code is intended to be executed in an environment with direct access to the system's physical address space; physical addresses are mapped in the system file in Microkit.
 
 U-Boot drivers performing memory mapped IO should perform seamlessly without the need for any modifications to the driver.
 
@@ -158,7 +158,7 @@ This modular structure of the CMake file is intended to allow for the library to
 
 Users of the library should be aware of its limitations, and potential workarounds for those limitations.
 
-1. **Thread safety**: The library is not thread safe; as such it is the responsibility of the user to serialise access to any single instance of the library. Note, however, that multiple instances of the library may be used. For example, two instances of the library could be used concurrently, each held within separate protection domain. IF multiple instances of the library are used, it is the responsibility of the user to ensure that each instance is using disjoint devices, i.e. two instances of the library would not both be able to access the same USB device; however, it should be possible for one instance to access an MMC device whilst a second instance accesses a USB device (see the [case study application](case_study_intro.md) for an example of this).
+1. **Thread safety**: The library is not thread safe; as such it is the responsibility of the user to serialise access to any single instance of the library. Note, however, that multiple instances of the library may be used. For example, two instances of the library could be used concurrently, each held within separate protection domain. If multiple instances of the library are used, it is the responsibility of the user to ensure that each instance is using disjoint devices, i.e. two instances of the library would not both be able to access the same USB device; however, it should be possible for one instance to access an MMC device whilst a second instance accesses a USB device (see the [case study application](case_study_intro.md) for an example of this).
 
 2. **Performance**: Do not expect great performance from the library. The underlying U-Boot drivers have tended to prioritise simplicity over performance; for example the SPI driver for the Avnet MaaXBoard does not support the use of DMA transfers even though the underlying device can perform DMA transfers. Additionally, the library wrapper adds additional layers of address translations and data copying (e.g. in its support of memory mapped IO and DMA) as part of the trade-off for minimising changes necessary to the U-Boot drivers.
 

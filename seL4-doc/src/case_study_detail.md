@@ -2,7 +2,7 @@
 
 Following on from the [case study introduction](case_study_intro.md), this section provides further details on the design and functionality of the 'security domain' demonstrator application.
 
-It is expected that the reader is familiar with the [seL4 microkit manual](https://github.com/seL4/microkit/blob/main/docs/manual.md).
+It is expected that the reader is familiar with the [seL4 Microkit manual](https://github.com/seL4/microkit/blob/main/docs/manual.md).
 
 ## Code Structure
 
@@ -35,7 +35,7 @@ microkit
 
 - `CMakeLists.txt`: Application build file.
 - `security_demo.system`: Microkit file for the project, declaring the application's protection domains including declaration of all protection domain channels.
-- `include/plat/<mmc|usb>_platform_devices.h`: Declaration of (platform specific) microkit attributes to grant a protection domain with capabilities access to a hardware device.
+- `include/plat/<mmc|usb>_platform_devices.h`: Declaration of (platform specific) Microkit attributes to grant a protection domain with capabilities access to a hardware device.
 
 ## Concurrency Model
 
@@ -59,15 +59,21 @@ All data is passed from the high-side to the low-side through a shared circular 
 
 ## Example of Protection Domain Communication
 
-The circular buffer shared between the Crypto protection domain (high-side) and the Transmitter protection domain (low-side) is used in this section as a detailed worked example of microkit data flow and control flow.
+The circular buffer shared between the Crypto protection domain (high-side) and the Transmitter protection domain (low-side) is used in this section as a detailed worked example of Microkit data flow and control flow.
 
-The buffer has been deliberately designed for the purpose of this worked example to use two types of protection domain interface listed in the [seL4 microkit manual](https://github.com/sel4-cap/microkit-old/blob/main/docs/manual.md), i.e. Memory region and Notification.
+The buffer has been deliberately designed for the purpose of this worked example to use two types of protection domain interface listed in the [seL4 Microkit manual](https://github.com/sel4-cap/microkit-old/blob/main/docs/manual.md), i.e. Memory region and Notification.
 
 ### Memory Region
 
 At its core the circular buffer is a simple character array with *head* and *tail* holding indexes associated with the start and end of the used portion of the array.
 
-- Function implementations for the circular buffer and included in `src/circular_buffer.c`.
+### Procedure
+
+Reading data from, or writing data to, the circular buffer requires the data array, *head* index, and *tail* index to be modified. Such modification of the buffer cannot be allowed to occur concurrently by both the Crypto and Transmitter protection domains, otherwise corruption of the buffer may occur. Access to the buffer by the two protection domains must therefore be protected to avoid concurrent access.
+
+Within the security demonstrator, a lock is used to enforce this critical section which takes the form of a boolean on the circular buffer data structure; each protection domain must lock the circular buffer prior to accessing the circular buffer, and must release the lock when access to the circular buffer has been completed.
+
+- Function implementations for the circular buffer are included in `src/circular_buffer.c`.
 - A memory region is a contiguous range of physical memory and the memory region for the circular buffer is mapped onto both the Crypto and Transmitter protection domains. A virtual address, caching attributes and permissions (read, write and execute) are given to each protection domain.
 
 This results in an instance of the circular buffer type being made available in an area of memory shared by both the Crypto and Transmitter protection domains.

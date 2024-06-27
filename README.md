@@ -7,6 +7,8 @@ This work is © Crown Copyright NCSC, licensed under a [Creative Commons Attribu
 
 Quickstart: you can read the documentation [here](seL4-doc/src/SUMMARY.md).
 
+## Background
+The sel4 DevKit was originally produced for the now obsolete CAmkES framework, https://github.com/sel4devkit. This version of the DevKit has been updated to use the new framework Microkit.
 
 ## Building the documentation with mdbook
 The sel4devkit documentation is able to be viewed [here](seL4-doc/src/SUMMARY.md) using the built in GitHub markdown viewer, but is also designed to be built using the mdbook command line tool.

@@ -36,7 +36,7 @@ In its later sections, this documentation:
 
   - uses the device driver library; and
 
-  - demonstrates inter-component communications using different seL4 mechanisms.
+  - demonstrates communication between protection domains using different seL4 mechanisms.
 
 This developer kit does not cover or replace any of the extensive documentation and tutorials of the [seL4 website](https://sel4.systems).
 
@@ -80,6 +80,6 @@ The document is structured into the following sections providing a step-by-step 
 
 - **Device Driver Development**: Presents a comprehensive and extensible device driver library, based upon the driver model used by U-Boot. It includes practical guidance on extending the library for other drivers and for other platforms.
 
-- **Case Study Application**: Works through a simple application that uses the driver library and demonstrates different seL4 connection mechanisms between its components.
+- **Case Study Application**: Works through a simple application that uses the driver library and demonstrates different seL4 connection mechanisms between its protection domains.
 
 - **Appendices**: Whilst the main sections of this document seek to simplify processes, e.g. through the use of pre-built assets and environments, it is accepted that this may result in a lack of flexibility. The appendices provide deeper technical details to enable greater flexibility. For example, where a pre-built asset or environment has been used, the appendices detail how they were built and provide guidance of how their configuration could be changed.
