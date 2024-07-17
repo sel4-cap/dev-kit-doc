@@ -32,7 +32,7 @@ __WARNING__: Any changes made outside the build environment's `/host` directory 
 
 For the purposes of the worked examples in this section the `/home/<user-name>/dev-kit-test/` directory on the host machine is mapped to the build environment's `/host` directory; please note that the directory must be supplied as an absolute path and not as a relative path, and within a Windows environment it needs to include a drive letter (such as `C:/home/<user-name>/dev-kit-test/`). It is expected that the user will choose a different directory and modify the commands as required.
 
-The following command executed from the microkit-maaxboard-dockerfiles folder of the host machine will start the build environment:
+The following command executed from the maaxboard-sel4-dev-env folder of the host machine will start the build environment:
 
 ```bash
 make user IMAGE=sdk HOST_DIR=/home/<user-name>/dev-kit-test/ HOME_DIR=~/
