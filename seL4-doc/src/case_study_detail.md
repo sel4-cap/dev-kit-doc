@@ -2,40 +2,49 @@
 
 Following on from the [case study introduction](case_study_intro.md), this section provides further details on the design and functionality of the 'security domain' demonstrator application.
 
-It is expected that the reader is familiar with the [seL4 Microkit manual](https://github.com/seL4/microkit/blob/main/docs/manual.md).
+It is expected that the reader is familiar with the [seL4 CAmkES manual](https://docs.sel4.systems/projects/camkes/manual.html).
 
 ## Code Structure
 
-The application is held within the following structure (all within the `microkit` folder), with key folders and files shown:
+The application is held within the following structure (all within the `camkes/apps` folder), with key folders and files shown:
 
 ```text
-microkit
+security_demo
 │
-├───crypto
-|   └───crytpo.c
-├───keyreader
-│   └───keyreader.c
-├───transmitter
-│   └───transmitter.c
-│      
+├───components
+│   ├───<component_1>
+│   │   ├───src
+│   │   │   └───<component_source_file>.c
+│   │   └───<component_camkes_file>.camkes
+│   ...
+│   └───<component_n>
+│       ├───src
+│       │   └───<component_source_file>.c
+│       └───<component_camkes_file>.camkes
+│
 ├───include
 │   └───plat
-│       └───<platform>
-│            ├───mmc_platform_devices.h
-│            └───usb_platform_devices.h
+│       ├───<platform>
+│       │   ├───eth_platform_devices.h
+│       │   ├───mmc_platform_devices.h
+│       │   └───usb_platform_devices.h
+│       └───dataport_buffer.h
 │
+├───interfaces
+│   ├───Character_RPC.idl4
+│   └───Lock_RPC.idl4
 │
 ├───CMakeLists.txt
-│
-├───example
-│   └───<platform>
-│       └───security_demo
-│           └───security_demo.system
+└───security_demo.camkes
 ```
 
 - `CMakeLists.txt`: Application build file.
-- `security_demo.system`: Microkit file for the project, declaring the application's protection domains including declaration of all protection domain channels.
-- `include/plat/<mmc|usb>_platform_devices.h`: Declaration of (platform specific) Microkit attributes to grant a protection domain with capabilities access to a hardware device.
+- `security_demo.camkes`: Top-level CAmkES file for the project, declaring the application's CAmkES 'assembly' including declaration of all inter-component connections.
+- `components/<component>/<component_camkes_file>.camkes`: A component's CAmkES file, declaring the component's attributes including declaration of all interfaces (i.e. exposed inter-component interaction points).
+- `interfaces/Character_RPC.idl4`: Declaration of a remote procedure call method used to communicate a character between components.
+- `interfaces/Lock_RPC.idl4`: Declaration of remote procedure call methods used to access a mutex held by another component.
+- `include/dataport_buffer.h`: Declaration of a C data type for a circular buffer to be stored in a dataport.
+- `include/<platform>/<eth|mmc|usb>_platform_devices.h`: Declaration of (platform specific) CAmkES attributes to grant a component with capabilities access to a hardware device.
 
 ## Concurrency Model
 
@@ -50,51 +59,63 @@ Threads of execution on the high-side perform the following functions:
 Asynchronously, threads of execution on the low-side perform the following functions:
 
 1. Reading ciphertext keypresses from a shared circular buffer between the high-side and low-side;
-2. Periodically writing received ciphertext to a log file.
+2. Periodically writing received ciphertext to a log file; and
+3. Outputting ciphertext to a network socket (if connected).
 
 All data is passed from the high-side to the low-side through a shared circular buffer stored within a dataport. It is this circular buffer between the high-side and low-side that permits:
 
 1. Data transfer from the high-side to the low-side; and
 2. Threads of execution on the high-side and threads of execution on the low-side to run asynchronously.
 
-## Example of Protection Domain Communication
+## Example of Inter-Component Communication
 
-The circular buffer shared between the Crypto protection domain (high-side) and the Transmitter protection domain (low-side) is used in this section as a detailed worked example of Microkit data flow and control flow.
+The circular buffer shared between the Crypto component (high-side) and the Transmitter component (low-side) is used in this section as a detailed worked example of CAmkES inter-component data flow and control flow.
 
-The buffer has been deliberately designed for the purpose of this worked example to use two types of protection domain interface listed in the [seL4 Microkit manual](https://github.com/sel4-cap/microkit-old/blob/main/docs/manual.md), i.e. Memory region and Notification.
+The buffer has been deliberately designed for the purpose of this worked example to use of all three types of component interface listed in the [seL4 CAmkES manual](https://docs.sel4.systems/projects/camkes/manual.html), i.e. *procedure*, *event* and *port*.
 
-### Memory Region
+### Port
 
 At its core the circular buffer is a simple character array with *head* and *tail* holding indexes associated with the start and end of the used portion of the array.
 
+- Further details are documented alongside the definition of the `dataport_buffer_t` type definition in `include/dataport_buffer.h`.
+- *Port* interfaces of data type `dataport_buffer_t` are declared in the Crypto and Transmitter component CAmkES files.
+- An `seL4SharedData` connection between the two *port* interfaces is then declared in the CAmkES assembly (see `security_demo.camkes`).
+
+This results in an instance of the circular buffer type being made available in an area of memory shared by both the Crypto and Transmitter components.
+
 ### Procedure
 
-Reading data from, or writing data to, the circular buffer requires the data array, *head* index, and *tail* index to be modified. Such modification of the buffer cannot be allowed to occur concurrently by both the Crypto and Transmitter protection domains, otherwise corruption of the buffer may occur. Access to the buffer by the two protection domains must therefore be protected to avoid concurrent access.
+Reading data from, or writing data to, the circular buffer requires the data array, *head* index, and *tail* index to be modified. Such modification of the buffer cannot be allowed to occur concurrently by both the Crypto and Transmitter components, otherwise corruption of the buffer may occur. Access to the buffer by the two components must therefore be protected to avoid concurrent access.
 
-Within the security demonstrator, a lock is used to enforce this critical section which takes the form of a boolean on the circular buffer data structure; each protection domain must lock the circular buffer prior to accessing the circular buffer, and must release the lock when access to the circular buffer has been completed.
+Within the security demonstrator, a mutex is used to enforce this critical section; each component must hold the lock on the mutex prior to accessing the circular buffer, and must release the lock when access to the circular buffer has been completed.
 
-- Function implementations for the circular buffer are included in `src/circular_buffer.c`.
-- A memory region is a contiguous range of physical memory and the memory region for the circular buffer is mapped onto both the Crypto and Transmitter protection domains. A virtual address, caching attributes and permissions (read, write and execute) are given to each protection domain.
+The mutex is owned by the Crypto component; see definition of `circular_buffer_mutex` in the Crypto component's CAmkES file. To allow the Transmitter component to access the mutex, a *procedure* interface is used providing `lock` and `unlock` routines.
 
-This results in an instance of the circular buffer type being made available in an area of memory shared by both the Crypto and Transmitter protection domains.
+- Declaration of the `lock` and `unlock` *procedure* templates are provided by `interfaces/Lock_RPC.idl4`.
+- *Procedure* interfaces using the `lock` and `unlock` templates are declared in the Crypto and Transmitter component CAmkES files.
+- An `seL4RPCCall` connection between the two *procedure* interfaces is then declared in the CAmkES assembly (see `security_demo.camkes`).
 
-### Notification
+This results in the Crypto component being supplied with a mutex and remote procedure call interfaces being supplied to the Transmitter component to allow it to access the mutex.
 
-A mechanism for the Transmitter protection domain to determine whether the circular buffer contains any data.
+### Event
 
-A Notification interface is used to allow the Crypto protection domain to notify Transmitter when the circular buffer is full. This allows the Transmitter protection domain to wait or poll for such a notification before accessing the circular buffer.
+Whilst a functional system could be produced with just the *port* and *procedure* interfaces described above, there would be no mechanism for the Transmitter component to determine whether the circular buffer contains any data other than to periodically poll the contents of the circular buffer; this would be needlessly inefficient.
 
-- Channels are set up between the Crypto and Transmitter protection domains in the applications system file which allow the protection domains to notify each other when there is data to read in a shared buffer.
+Instead, an *event* interface is used to allow the Crypto component to notify Transmitter when a character has been written into the circular buffer. This allows the Transmitter component to wait or poll for such a notification before locking the mutex and accessing the circular buffer.
 
-This results in the creation of a notification that can be emitted from the Crypto protection domain and can be either waited on, or polled, by the Transmitter protection domain.
+- *Event* interfaces, with the Crypto component as the emitter and Transmitter as the consumer, are declared in the Crypto and Transmitter component CAmkES files.
+- An `seL4Notification` connection between the two *event* interfaces is then declared in the CAmkES assembly (see `security_demo.camkes`).
+
+This results in the creation of a notification that can be emitted from the Crypto component and can be either waited on, or polled, by the Transmitter component.
 
 ### Summary
 
-Putting the two interface types (Memory region and Notification) together results in:
+Putting all three interface types (*port*, *procedure*, and *event*) together results in:
 
 - A shared circular buffer;
+- A mutex which can be accessed via remote procedure calls to protect the buffer against concurrent access; and
 - A notification mechanism to allow the producer to notify the consumer when new data is available.
 
-This thereby allows asynchronous data transfer and buffering between protection domains such that the producer and consumer can work concurrently.
+This thereby allows asynchronous data transfer and buffering between components such that the producer and consumer can work concurrently.
 
-The example source code for the producer protection domain demonstrating use of these communication mechanisms can be found in `crypto/crypto.c`. The source code for the consumer protection domain can be found in `transmitter/transmitter.c`.
+The example source code for the producer component demonstrating use of these inter-component communication mechanisms can be found in `components/Crypto/src/crypto.c`. The source code for the consumer component can be found in `components/Transmitter/src/transmitter.c`.

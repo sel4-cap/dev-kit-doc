@@ -28,13 +28,18 @@
 - [Building Applications](building_applications.md)
 - [Execution on Target Platform](execution_on_target_platform.md)
 
-# Device Driver Development
+# Device Driver Development - CAmkES
 
 - [Device Driver Introduction](device_driver_intro.md)
 - [U-Boot Driver Library Overview](uboot_driver_library.md)
 - [Using the U-Boot Driver Library](uboot_driver_usage.md)
 - [Library Extension - New Platform](uboot_library_add_platform.md)
 - [Library Extension - New Driver](uboot_library_add_driver.md)
+
+# Update for Microkit 
+
+- [Updates for Microkit](Update.md)
+- [Using the U-boot Driver Library Microkit](uboot_driver_usage_microkit.md)
 
 # Case Study Application
 
