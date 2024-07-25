@@ -21,7 +21,7 @@ The primary goal of the library is to allow drivers from U-Boot to be used withi
 
 - A wrapper around the U-Boot code to provide an API for users of the library to interact with devices and manage library initialisation / shutdown.
 
-It should be noted that the library works with the intended security and isolation of seL4; capabilities to permit access to hardware devices and provide sufficient resources (e.g. heap and DMA memory) must be granted to components using the library.
+It should be noted that the library works with the intended security and isolation of seL4; capabilities to permit access to hardware devices and provide sufficient resources (e.g. heap and DMA memory) must be granted to components/protection domains using the library.
 
 ## Detailed Design Information
 
@@ -63,7 +63,7 @@ The U-Boot code expects to have access to a high-frequency, monotonic timer. The
 
 Provision of such a timer is platform dependent. For the Avnet MaaXBoard the timer has been implemented through use of the System Counter (SYS_CON) device provided by the iMX8MQ SoC; see file `timer_imx8mq.c` for details.
 
-### Memory Mapped IO
+### Memory Mapped IO (CAmkES)
 
 One of the core mechanisms for providing a software interface to a hardware device is through the use of [memory mapped IO](https://en.wikipedia.org/wiki/Memory-mapped_I/O).
 
@@ -79,6 +79,10 @@ At this point it should be noted that U-Boot source code is intended to be execu
 2. When a driver attempts to perform memory mapped IO it calls architecture-dependent routines from the `io.h` header, e.g. `readl` or `writel`. A stubbed version of the `io.h` header is provided that uses the `sel4_io_map` package to translate the physical addresses provided by the driver to the equivalent address mapped into the library's virtual address space.
 
 U-Boot drivers performing memory mapped IO should perform seamlessly without the need for any modifications to the driver.
+
+### Memory Mapped IO (Microkit)
+
+In Microkit, instead of addresses being mapped during library initialisation the addresses are mapped in the system file
 
 ### DMA
 
@@ -116,7 +120,7 @@ The console subsystem's `stdin` file, however, is used. For example, if a USB ke
 The wrapper header file `uboot_print.h` provides a set of macros that map:
 
 - All U-Boot standard output routines onto calls to the C library `printf` routine.
-- All U-Boot logging routines onto the seL4 platform support library `ZF_LOG*` routines at an equivalent logging level.
+- All U-Boot logging routines onto the seL4 platform support library `ZF_LOG*` routines at an equivalent logging level or `UBOOT_LOG` routines for Microkit.
 
 ### Initialisation
 
@@ -140,6 +144,15 @@ When calling the `initialise_uboot_wrapper` routine the following must be provid
 - The list of device tree paths for the devices to enable. Note that all sub-nodes of the device tree paths will be automatically enabled; only the root node for the required devices need to be listed. All other nodes in the device tree will be marked as disabled.
 
 A worked example for use of the `initialise_uboot_wrapper` routine is provided by the [`uboot-driver-example` test application](uboot_driver_usage.md#test-application-uboot-driver-example) for the Avnet MaaXBoard.
+
+### Initialisation (Microkit)
+
+The initalisation of the library is the same for Microkit except that that there is no initialisation of the memory mapped IO wrappers as memory mapped IO is dealt with in the system file.
+
+Furthermore, when calling the `initialise_uboot_wrapper` routine the following must be provided:
+
+- A DMA manager which can be initialised with a call to the `microkit_dma_manager` routine.
+- A pointer to the device tree blob.
 
 ## Build System
 
@@ -165,7 +178,7 @@ This modular structure of the CMake file is intended to allow for the library to
 
 Users of the library should be aware of its limitations, and potential workarounds for those limitations.
 
-1. **Thread safety**: The library is not thread safe; as such it is the responsibility of the user to serialise access to any single instance of the library. Note, however, that multiple instances of the library may be used. For example, two instances of the library could be used concurrently, each held within separate CAmkES components. IF multiple instances of the library are used, it is the responsibility of the user to ensure that each instance is using disjoint devices, i.e. two instances of the library would not both be able to access the same USB device; however, it should be possible for one instance to access an Ethernet device whilst a second instance accesses a USB device (see the [case study application](case_study_intro.md) for an example of this).
+1. **Thread safety**: The library is not thread safe; as such it is the responsibility of the user to serialise access to any single instance of the library. Note, however, that multiple instances of the library may be used. For example, two instances of the library could be used concurrently, each held within separate CAmkES components/ Microkit protection domains. If multiple instances of the library are used, it is the responsibility of the user to ensure that each instance is using disjoint devices, i.e. two instances of the library would not both be able to access the same USB device; however, it should be possible for one instance to access an Ethernet device whilst a second instance accesses a USB device (see the [case study application](case_study_intro.md) for an example of this).
 
 2. **Performance**: Do not expect great performance from the library. The underlying U-Boot drivers have tended to prioritise simplicity over performance; for example the SPI driver for the Avnet MaaXBoard does not support the use of DMA transfers even though the underlying device can perform DMA transfers. Additionally, the library wrapper adds additional layers of address translations and data copying (e.g. in its support of memory mapped IO and DMA) as part of the trade-off for minimising changes necessary to the U-Boot drivers.
 
