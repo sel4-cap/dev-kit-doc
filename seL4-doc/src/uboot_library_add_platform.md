@@ -78,7 +78,7 @@ Throughout the sections of this guide devoted to extension of the U-Boot driver 
 - `microkit/boards`: Location of platform device trees.
 - `example/<platform>/uboot-driver-example`: [The test application](uboot_driver_usage.md).
 - `microkit/libubootdrivers`: Referred to as "the library" throughout. See [linked Git repository](https://github.com/sel4-cap/dev-kit-libs/tree/main/libubootdrivers).
-- `microkit/uboot`: Fork of the U-Boot project source code (note, this is also symlinked to `projects/project_libs/libubootdrivers/uboot`).
+- `microkit/uboot`: Fork of the U-Boot project source code (note, this is also symlinked to `microkit/libubootdrivers/uboot`).
 
 ## Required Reading
 

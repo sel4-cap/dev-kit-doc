@@ -8,6 +8,8 @@ This guide focuses on methods, complete with an extensive worked example, for ad
 
 The following sections describe the creation of an extensible library for seL4 allowing U-Boot device drivers to function under seL4 with either minimal or no modifications. As an example of its usage, the library provides an extensive set of device drivers for the Avnet MaaXBoard (support for USB, Ethernet, SD/MMC, I<sup>2</sup>C, GPIO, IOMUX, Clock and SPI devices). Guidance on the extension of this library to support other platforms and devices is also provided.
 
+This guide provides guidance on adding device drivers atop of both the CAmkES and Microkit frameworks.
+
 ## Goals
 
 The goal of this guide is to lower the barrier to entry for the use of seL4. One such barrier is device driver support for seL4, both the relatively limited device driver support as well as the difficulty in the creation of new device drivers.
