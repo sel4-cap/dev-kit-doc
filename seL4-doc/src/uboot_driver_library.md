@@ -63,13 +63,15 @@ The U-Boot code expects to have access to a high-frequency, monotonic timer. The
 
 Provision of such a timer is platform dependent. For the Avnet MaaXBoard the timer has been implemented through use of the System Counter (SYS_CON) device provided by the iMX8MQ SoC; see file `timer_imx8mq.c` for details.
 
-### Memory Mapped IO (CAmkES)
+### Memory Mapped IO 
 
 One of the core mechanisms for providing a software interface to a hardware device is through the use of [memory mapped IO](https://en.wikipedia.org/wiki/Memory-mapped_I/O).
 
 The memory addresses that a U-Boot driver uses for communication with a device can be either read from the device tree (i.e. from a device's `reg` property) or in some cases can be hard-coded into the driver.
 
 At this point it should be noted that U-Boot source code is intended to be executed in an environment with direct access to the system's physical address space; however, the library is executed within a virtual address space provided by seL4. As such, the addresses used by U-Boot drivers are *physical* addresses which are not directly accessible by the library. To work around this issue:
+
+#### CAmkES
 
 1. During library initialisation the list of all platform-dependent devices that need to be accessed must be provided. For each device:
    - The device's physical address range is read from the device tree.
@@ -80,9 +82,20 @@ At this point it should be noted that U-Boot source code is intended to be execu
 
 U-Boot drivers performing memory mapped IO should perform seamlessly without the need for any modifications to the driver.
 
-### Memory Mapped IO (Microkit)
+#### Microkit
 
-In Microkit, instead of addresses being mapped during library initialisation the addresses are mapped in the system file
+The physical addresses of all platform-dependent devices must be provided in the system file in this format:
+
+```
+<system>
+    <memory_region name="<physical_device_name>" size="<physical_device_size>" phys_addr="<physical_device address>"/>
+    ...
+    <protection_domain name="<PD name>">
+      <map mr="<physical_device_name>" vaddr="<virtual_map_address>" perms="rw" cached="false"/>
+      ...
+   </protection_domain>
+</system>
+```
 
 ### DMA
 
@@ -128,6 +141,8 @@ As part of library initialisation, any U-Boot subsystems that require explicit i
 
 Initialisation of the library comprises:
 
+#### CAmkES
+
 - Initialisation of the memory mapped IO and DMA wrappers;
 - Initialisation of the monotonic timer;
 - Initialisation of the Linker Lists data structure;
@@ -143,16 +158,24 @@ When calling the `initialise_uboot_wrapper` routine the following must be provid
 - The list of device tree paths containing physical addresses to be memory mapped (through the `reg` property).
 - The list of device tree paths for the devices to enable. Note that all sub-nodes of the device tree paths will be automatically enabled; only the root node for the required devices need to be listed. All other nodes in the device tree will be marked as disabled.
 
-A worked example for use of the `initialise_uboot_wrapper` routine is provided by the [`uboot-driver-example` test application](uboot_driver_usage.md#test-application-uboot-driver-example) for the Avnet MaaXBoard.
+#### Microkit
 
-### Initialisation (Microkit)
+- Initialisation of the DMA wrappers;
+- Initialisation of the monotonic timer;
+- Initialisation of the Linker Lists data structure;
+- Initialisation of the Global Data data structure;
+- Initialisation of U-Boot's Environment subsystem (manages storage of environment variables);
+- Initialisation of U-Boot's Driver Model subsystem;
+- Initialisation of U-Boot's MMC subsystem (if SD/MMC drivers are used by the platform);
+- Initialisation of U-Boot's Network subsystem (if Ethernet drivers are used by the platform).
 
-The initalisation of the library is the same for Microkit except that that there is no initialisation of the memory mapped IO wrappers as memory mapped IO is dealt with in the system file.
-
-Furthermore, when calling the `initialise_uboot_wrapper` routine the following must be provided:
+When calling the `initialise_uboot_wrapper` routine the following must be provided:
 
 - A DMA manager which can be initialised with a call to the `microkit_dma_manager` routine.
 - A pointer to the device tree blob.
+- The list of device tree paths for the devices to enable. Note that all sub-nodes of the device tree paths will be automatically enabled; only the root node for the required devices need to be listed. All other nodes in the device tree will be marked as disabled.
+
+A worked example for use of the `initialise_uboot_wrapper` routine is provided by the [`uboot-driver-example` test application](uboot_driver_usage.md#test-application-uboot-driver-example) for the Avnet MaaXBoard.
 
 ## Build System
 
